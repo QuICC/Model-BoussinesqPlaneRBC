@@ -2,5 +2,5 @@ set(MHDSources
 )
 
 set(MHDSrcSubDirs
-  Boussinesq
+   Boussinesq
 )

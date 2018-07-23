@@ -12,7 +12,7 @@ import quicc.base.base_model as base_model
 from quicc.geometry.cartesian.cartesian_boundary_1d import no_bc
 
 
-class BoussinesqRBCPlaneConfig:
+class PhysicalModelConfig:
     """Class to setup the Boussinesq Rayleigh-Benard convection in a plane layer (2 periodic directions) (Toroidal/Poloidal formulation)"""
 
     def periodicity(self):
@@ -23,7 +23,15 @@ class BoussinesqRBCPlaneConfig:
     def nondimensional_parameters(self):
         """Get the list of nondimensional parameters"""
 
-        return ["prandtl", "rayleigh", "scale1d", "fast_mean"]
+        return ["prandtl", "rayleigh", "fast_mean"]
+
+    def automatic_parameters(self, eq_params):
+        """Extend parameters with automatically computable values"""
+
+        # add bounds for Chebyshev
+        d = {'lower1d':0.0, 'upper1d':1.0}
+
+        return d
 
     def config_fields(self):
         """Get the list of fields that need a configuration entry"""
@@ -48,7 +56,7 @@ class BoussinesqRBCPlaneConfig:
 
         return self.compile_equation_info(res, field_row, is_complex, index_mode)
 
-class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
+class PhysicalModel(PhysicalModelConfig, base_model.BaseModel):
     """Class to setup the Boussinesq Rayleigh-Benard convection in a plane layer (2 periodic directions) (Toroidal/poloidal formulation)"""
 
     def stability_fields(self):
@@ -240,6 +248,7 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
     def explicit_block(self, res, eq_params, eigs, bcs, field_row, field_col, restriction = None):
         """Create matrix block for explicit linear term"""
 
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
         kx = eigs[0]
         ky = eigs[1]
 
@@ -254,10 +263,12 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
     def nonlinear_block(self, res, eq_params, eigs, bcs, field_row, field_col, restriction = None):
         """Create the explicit nonlinear operator"""
 
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
+
         mat = None
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_col)
         if field_row == ("temperature","") and field_col == field_row:
-            mat = geo.i2(res[0], bc)
+            mat = geo.i2(res[0], zi, zo, bc)
 
         if mat is None:
             raise RuntimeError("Equations are not setup properly!")
@@ -269,7 +280,7 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
 
         Ra = eq_params['rayleigh']
         Pr = eq_params['prandtl']
-        zscale = eq_params['scale1d']
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
 
         kx = eigs[0]
         ky = eigs[1]
@@ -279,78 +290,78 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
         # Mean X velocity
         if field_row == ("velocity","tor") and kx == 0 and ky == 0:
             if field_col == ("velocity","tor"):
-                mat = geo.i2d2(res[0], bc, 1.0, cscale = zscale)
+                mat = geo.i2d2(res[0], zi, zo, bc, 1.0)
 
             elif field_col == ("velocity","pol"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
         # Mean Y velocity
         elif field_row == ("velocity","pol") and kx == 0 and ky == 0:
             if field_col == ("velocity","tor"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("velocity","pol"):
-                mat = geo.i2d2(res[0], bc, 1.0, cscale = zscale)
+                mat = geo.i2d2(res[0], zi, zo, bc, 1.0)
 
             elif field_col == ("temperature",""):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
     
         # Mean temperature
         elif field_row == ("temperature","") and kx == 0 and ky == 0:
             if field_col == ("velocity","tor"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("velocity","pol"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
-                mat = geo.i2d2(res[0], bc, 1.0/Pr, cscale = zscale)
+                mat = geo.i2d2(res[0], zi, zo, bc, 1.0/Pr)
 
         # Toroidal velocity
         elif field_row == ("velocity","tor"):
             if field_col == ("velocity","tor"):
-                mat = geo.i2(res[0], bc, (kx**2 + ky**2)**2)
+                mat = geo.i2(res[0], zi, zo, bc, (kx**2 + ky**2)**2)
                 bc[0] = min(bc[0], 0)
-                mat += geo.i2d2(res[0], bc, -(kx**2 + ky**2), cscale = zscale)
+                mat += geo.i2d2(res[0], zi, zo, bc, -(kx**2 + ky**2))
 
             elif field_col == ("velocity","pol"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
         # Poloidal velocity
         elif field_row == ("velocity","pol"):
             if field_col == ("velocity","tor"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("velocity","pol"):
-                mat = geo.i4(res[0], bc, -(kx**2 + ky**2)**3)
+                mat = geo.i4(res[0], zi, zo, bc, -(kx**2 + ky**2)**3)
                 bc[0] = min(bc[0], 0)
-                mat += geo.i4d2(res[0], bc, 2.0*(kx**2 + ky**2)**2, cscale = zscale)
-                mat += geo.i4d4(res[0], bc, -(kx**2 + ky**2), cscale = zscale)
+                mat += geo.i4d2(res[0], zi, zo, bc, 2.0*(kx**2 + ky**2)**2)
+                mat += geo.i4d4(res[0], zi, zo, bc, -(kx**2 + ky**2))
 
             elif field_col == ("temperature",""):
-                mat = geo.i4(res[0], bc, (kx**2 + ky**2)*(Ra/Pr))
+                mat = geo.i4(res[0], zi, zo, bc, (kx**2 + ky**2)*(Ra/Pr))
 
         # temperature
         elif field_row == ("temperature",""):
             if field_col == ("velocity","tor"):
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("velocity","pol"):
                 if self.linearize or bcs["bcType"] == self.FIELD_TO_RHS:
-                    mat = geo.i2(res[0], bc, (kx**2 + ky**2))
+                    mat = geo.i2(res[0], zi, zo, bc, (kx**2 + ky**2))
                 else:
-                    mat = geo.zblk(res[0], bc)
+                    mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
-                mat = geo.i2(res[0], bc, -(kx**2 + ky**2)/Pr)
+                mat = geo.i2(res[0], zi, zo, bc, -(kx**2 + ky**2)/Pr)
                 bc[0] = min(bc[0], 0)
-                mat += geo.i2d2(res[0], bc, 1.0/Pr, cscale = zscale)
+                mat += geo.i2d2(res[0], zi, zo, bc, 1.0/Pr)
 
         if mat is None:
             raise RuntimeError("Equations are not setup properly!")
@@ -360,9 +371,10 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
     def time_block(self, res, eq_params, eigs, bcs, field_row, restriction = None):
         """Create matrix block of time operator"""
 
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
+
         kx = eigs[0]
         ky = eigs[1]
-        zscale = eq_params['scale1d']
         if eq_params['fast_mean'] > 0:
             mean_dt = eq_params['fast_mean']
         else:
@@ -372,29 +384,29 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_row)
         # Mean X velocity
         if field_row == ("velocity","tor") and kx == 0 and ky == 0:
-            mat = geo.i2(res[0], bc, 1.0)
+            mat = geo.i2(res[0], zi, zo, bc, 1.0)
 
         # Mean Y velocity
         elif field_row == ("velocity","pol") and kx == 0 and ky == 0:
-            mat = geo.i2(res[0], bc, 1.0)
+            mat = geo.i2(res[0], zi, zo, bc, 1.0)
 
         # Mean temperature
         elif field_row == ("temperature","") and kx == 0 and ky == 0:
-            mat = geo.i2(res[0], bc, mean_dt)
+            mat = geo.i2(res[0], zi, zo, bc, mean_dt)
 
         # Toroidal velocity
         elif field_row == ("velocity","tor"):
-            mat = geo.i2(res[0], bc, -(kx**2 + ky**2))
+            mat = geo.i2(res[0], zi, zo, bc, -(kx**2 + ky**2))
 
         # Poloidal velocity
         elif field_row == ("velocity","pol"):
-            mat = geo.i4(res[0], bc, (kx**2 + ky**2)**2)
+            mat = geo.i4(res[0], zi, zo, bc, (kx**2 + ky**2)**2)
             bc[0] = min(bc[0], 0)
-            mat += geo.i4d2(res[0], bc, -(kx**2 + ky**2), cscale = zscale)
+            mat += geo.i4d2(res[0], zi, zo, bc, -(kx**2 + ky**2))
 
         # Temperature
         elif field_row == ("temperature",""):
-            mat = geo.i2(res[0], bc, 1.0)
+            mat = geo.i2(res[0], zi, zo, bc, 1.0)
 
         if mat is None:
             raise RuntimeError("Equations are not setup properly!")
@@ -404,17 +416,19 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
     def boundary_block(self, res, eq_params, eigs, bcs, field_row, field_col, restriction = None):
         """Create matrix block of boundary operator"""
 
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
+
         mat = None
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_col)
 
-        mat = geo.zblk(res[0], bc)
+        mat = geo.zblk(res[0], zi, zo, bc)
 
         if mat is None:
             raise RuntimeError("Equations are not setup properly!")
 
         return mat
 
-class BoussinesqRBCPlaneVisu(BoussinesqRBCPlaneConfig, base_model.BaseModel):
+class PhysicalModelVisu(PhysicalModelConfig, base_model.BaseModel):
     """Class to setup the visualization options for TFF scheme """
 
     def implicit_fields(self, field_row):
@@ -496,20 +510,21 @@ class BoussinesqRBCPlaneVisu(BoussinesqRBCPlaneConfig, base_model.BaseModel):
 
         kx = eigs[0]
         ky = eigs[1]
+        zi, zo = (self.automatic_parameters(eq_params)['lower1d'], self.automatic_parameters(eq_params)['upper1d'])
 
         mat = None
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_col)
         # Mean temperature
         if field_row == ("mean_temperature","") and field_col == ("temperature",""):
             if kx == 0 and ky == 0:
-                mat = geo.qid(res[0], 0, bc)
+                mat = geo.qid(res[0], zi, zo, 0, bc)
             else:
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
         elif field_row == ("fluct_temperature","") and field_col == ("temperature",""):
             if kx == 0 and ky == 0:
-                mat = geo.zblk(res[0], bc)
+                mat = geo.zblk(res[0], zi, zo, bc)
             else:
-                mat = geo.qid(res[0], 0, bc)
+                mat = geo.qid(res[0], zi, zo, 0, bc)
 
         if mat is None:
             raise RuntimeError("Equations are not setup properly!")

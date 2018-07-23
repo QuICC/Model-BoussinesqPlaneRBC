@@ -1,15 +1,15 @@
 /**
- * @file Momentum.hpp
- * @brief Implementation of the vector momentum equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
+ * @file Transport.hpp
+ * @brief Implementation of the transport equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
  * @author Philippe Marti \<philippe.marti@colorado.edu\>
  */
 
-#ifndef QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
-#define QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
+#ifndef QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_TRANSPORT_HPP
+#define QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_TRANSPORT_HPP
 
 // Configuration includes
 //
-#include "SmartPointers/SharedPtrMacro.h"
+#include <memory>
 
 // System includes
 //
@@ -19,9 +19,9 @@
 
 // Project includes
 //
-#include "Base/Typedefs.hpp"
-#include "TypeSelectors/ScalarSelector.hpp"
-#include "Equations/IVectorEquation.hpp"
+#include "QuICC/Base/Typedefs.hpp"
+#include "QuICC/TypeSelectors/ScalarSelector.hpp"
+#include "QuICC/Equations/IScalarEquation.hpp"
 
 namespace QuICC {
 
@@ -34,9 +34,9 @@ namespace Plane {
 namespace RBC {
 
    /**
-    * @brief Implementation of the vector momentum equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
+    * @brief Implementation of the transport equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
     */
-   class Momentum: public IVectorEquation
+   class Transport: public IScalarEquation
    {
       public:
          /**
@@ -44,12 +44,12 @@ namespace RBC {
           *
           * @param spEqParams    Shared equation parameters
           */
-         Momentum(SharedEquationParameters spEqParams);
+         Transport(SharedEquationParameters spEqParams);
 
          /**
           * @brief Simple empty destructor
           */
-         virtual ~Momentum();
+         virtual ~Transport();
 
          /**
           * @brief Compute the nonlinear interaction term
@@ -70,11 +70,6 @@ namespace RBC {
           */
          virtual void setCoupling();
 
-         /**
-          * @brief Set the nonlinear integration components
-          */
-         virtual void setNLComponents();
-
       private:
    };
 
@@ -84,4 +79,4 @@ namespace RBC {
 }
 }
 
-#endif // QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
+#endif // QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_TRANSPORT_HPP
