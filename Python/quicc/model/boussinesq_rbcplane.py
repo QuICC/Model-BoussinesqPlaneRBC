@@ -32,7 +32,7 @@ class BoussinesqRBCPlaneConfig:
 
     def stencil(self, res, eq_params, eigs, bcs, field_row, make_square):
         """Create the galerkin stencil"""
-    
+
         # Get boundary condition
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_row)
         return geo.stencil(res[0], bc, make_square)
@@ -95,7 +95,7 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
             elif field_row in [("velocity","pol")]:
                 if eigs[0] == 0 and eigs[1] == 0:
                     shift_z = 2
-                elif bcs.get("velocity", -1) == 2: 
+                elif bcs.get("velocity", -1) == 2:
                     shift_z = 2
                 else:
                     shift_z = 4
@@ -182,7 +182,7 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
                 elif field_row == ("velocity","pol"):
                     if eigs[0] == 0 and eigs[1] == 0:
                         bc['rt'] = 2
-                    elif bcs.get("velocity", -1) == 2: 
+                    elif bcs.get("velocity", -1) == 2:
                         bc['rt'] = 2
                     else:
                         bc['rt'] = 4
@@ -297,7 +297,7 @@ class BoussinesqRBCPlane(BoussinesqRBCPlaneConfig, base_model.BaseModel):
 
             elif field_col == ("temperature",""):
                 mat = geo.zblk(res[0], bc)
-    
+
         # Mean temperature
         elif field_row == ("temperature","") and kx == 0 and ky == 0:
             if field_col == ("velocity","tor"):

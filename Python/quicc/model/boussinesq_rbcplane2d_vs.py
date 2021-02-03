@@ -92,7 +92,7 @@ class BoussinesqRBCPlane2DVS(base_model.BaseModel):
         # Matrix operator is complex
         is_complex = True
 
-        # Index mode: SLOWEST_SINGLE_RHS, SLOWEST_MULTI_RHS, MODE, SINGLE 
+        # Index mode: SLOWEST_SINGLE_RHS, SLOWEST_MULTI_RHS, MODE, SINGLE
         index_mode = self.MODE
 
         return self.compile_equation_info(res, field_row, is_complex, index_mode)
@@ -153,7 +153,7 @@ class BoussinesqRBCPlane2DVS(base_model.BaseModel):
                 else:
                     if field_row == ("temperature","") and field_col == field_row:
                         bc = {0:22}
-            
+
             # Set LHS galerkin restriction
             if self.use_galerkin:
                 if field_row == ("streamfunction",""):
@@ -231,7 +231,7 @@ class BoussinesqRBCPlane2DVS(base_model.BaseModel):
         Ra = eq_params['rayleigh']
 
         zscale = eq_params['scale1d']
-        
+
         k = eigs[0]
 
         mat = None

@@ -92,7 +92,7 @@ class BoussinesqRBCPlaneVC(base_model.BaseModel):
 
     def stencil(self, res, eq_params, eigs, bcs, field_row, make_square):
         """Create the galerkin stencil"""
-        
+
         # Get boundary condition
         bc = self.convert_bc(eq_params,eigs,bcs,field_row,field_row)
         return geo.stencil(res[0], bc, make_square)
@@ -103,7 +103,7 @@ class BoussinesqRBCPlaneVC(base_model.BaseModel):
         # Matrix operator is complex except for vorticity and mean temperature
         is_complex = True
 
-        # Index mode: SLOWEST_SINGLE_RHS, SLOWEST_MULTI_RHS, MODE, SINGLE 
+        # Index mode: SLOWEST_SINGLE_RHS, SLOWEST_MULTI_RHS, MODE, SINGLE
         index_mode = self.MODE
 
         return self.compile_equation_info(res, field_row, is_complex, index_mode)
@@ -177,7 +177,7 @@ class BoussinesqRBCPlaneVC(base_model.BaseModel):
 
             if self.use_galerkin and field_col == ("pressure",""):
                         bc = {0:-1, 'rt':0}
-            
+
             # Set LHS galerkin restriction
             if self.use_galerkin:
                 if field_row == ("velocity","x"):
