@@ -326,9 +326,7 @@ class PhysicalModel(PhysicalModelConfig, base_model.BaseModel):
                 mat = geo.i2(res[0], zi, zo, bc, (kx**2 + ky**2)**2)
                 bc[0] = min(bc[0], 0)
                 mat += geo.i2d2(res[0], zi, zo, bc, -(kx**2 + ky**2))
-
-            elif field_col == ("velocity","pol"):
-                mat = geo.zblk(res[0], zi, zo, bc)
+geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
                 mat = geo.zblk(res[0], zi, zo, bc)

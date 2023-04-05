@@ -1,28 +1,20 @@
 /** 
  * @file Momentum.cpp
  * @brief Source of the implementation of the vector momentum equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
- * @author Philippe Marti \<philippe.marti@colorado.edu\>
  */
-
-// Configuration includes
-//
 
 // System includes
 //
 
-// External includes
-//
-
-// Class include
-//
-#include "QuICC/Model/Boussinesq/Plane/RBC/Momentum.hpp"
-
 // Project includes
 //
-#include "QuICC/Base/Typedefs.hpp"
-#include "QuICC/Base/MathConstants.hpp"
-#include "QuICC/Enums/NonDimensional.hpp"
-#include "QuICC/PhysicalOperators/Cross.hpp"
+#include "QuICC/Model/Boussinesq/Plane/RBC/Momentum.hpp"
+#include "QuICC/Typedefs.hpp"
+#include "QuICC/Math/Constants.hpp"
+#include "QuICC/PhysicalNames/Velocity.hpp"
+#include "QuICC/SolveTiming/Prognostic.hpp"
+#include "QuICC/SpatialScheme/ISpatialScheme.hpp"
+#include "QuICC/Model/Boussinesq/Plane/RBC/MomentumKernel.hpp"
 
 namespace QuICC {
 
@@ -34,22 +26,21 @@ namespace Plane {
 
 namespace RBC {
 
-   Momentum::Momentum(SharedEquationParameters spEqParams)
-      : IVectorEquation(spEqParams)
+   Momentum::Momentum(SharedEquationParameters spEqParams, SpatialScheme::SharedCISpatialScheme spScheme, std::shared_ptr<Model::IModelBackend> spBackend)
+      : IVectorEquation(spEqParams, spScheme, spBackend)
    {
       // Set the variable requirements
       this->setRequirements();
    }
 
-   Momentum::~Momentum()
-   {
-   }
-
    void Momentum::setCoupling()
    {
-      this->defineCoupling(FieldComponents::Spectral::TOR, CouplingInformation::PROGNOSTIC, 0, true, false);
+      auto features = defaultCouplingFeature();
+      features.at(CouplingFeature::Nonlinear) = true;
 
-      this->defineCoupling(FieldComponents::Spectral::POL, CouplingInformation::PROGNOSTIC, 0, true, false);
+      this->defineCoupling(FieldComponents::Spectral::TOR, CouplingInformation::PROGNOSTIC, 0, features);
+
+      this->defineCoupling(FieldComponents::Spectral::POL, CouplingInformation::PROGNOSTIC, 0, features);
    }
 
    void Momentum::setNLComponents()
@@ -59,42 +50,42 @@ namespace RBC {
       this->addNLComponent(FieldComponents::Spectral::POL, 0);
    }
 
-   void Momentum::computeNonlinear(Datatypes::PhysicalScalarType& rNLComp, FieldComponents::Physical::Id compId) const
+   void Momentum::initNLKernel(const bool force)
    {
-      ///
-      /// Compute \f$\left(\nabla\wedge\vec u\right)\wedge\vec u\f$
-      ///
-      switch(compId)
+      // Initialize if empty or forced
+      if(force || !this->mspNLKernel)
       {
-         case(FieldComponents::Physical::X):
-            Physical::Cross<FieldComponents::Physical::Y,FieldComponents::Physical::Z>::set(rNLComp, this->unknown().dom(0).curl(), this->unknown().dom(0).phys(), 1.0);
-            break;
-         case(FieldComponents::Physical::Y):
-            Physical::Cross<FieldComponents::Physical::Z,FieldComponents::Physical::X>::set(rNLComp, this->unknown().dom(0).curl(), this->unknown().dom(0).phys(), 1.0);
-            break;
-         case(FieldComponents::Physical::Z):
-            Physical::Cross<FieldComponents::Physical::X,FieldComponents::Physical::Y>::set(rNLComp, this->unknown().dom(0).curl(), this->unknown().dom(0).phys(), 1.0);
-            break;
-         default:
-            assert(false);
-            break;
+         // Initialize the physical kernel
+         auto spNLKernel = std::make_shared<Physical::Kernel::MomentumKernel>();
+         spNLKernel->setVelocity(this->name(), this->spUnknown());
+         spNLKernel->init(1.0);
+         this->mspNLKernel = spNLKernel;
       }
    }
 
    void Momentum::setRequirements()
    {
       // Set temperatur as equation unknown
-      this->setName(PhysicalNames::VELOCITY);
+      this->setName(PhysicalNames::Velocity::id());
 
       // Set solver timing
-      this->setSolveTiming(SolveTiming::PROGNOSTIC);
+      this->setSolveTiming(SolveTiming::Prognostic::id());
+
+      // Forward transform generates nonlinear RHS
+      this->setForwardPathsType(FWD_IS_NONLINEAR);
+
+      // Get reference to spatial scheme
+      const auto& ss = this->ss();
 
       // Add velocity to requirements: is scalar?, need spectral?, need physical?, need grad?(, need curl?)
-      this->mRequirements.addField(PhysicalNames::VELOCITY, FieldRequirement(false, true, true, false, true));
+      auto& velReq = this->mRequirements.addField(PhysicalNames::Velocity::id(), FieldRequirement(false, ss.spectral(), ss.physical()));
+      velReq.enableSpectral();
+      velReq.enablePhysical();
+      velReq.enableCurl();
    }
 
-}
-}
-}
-}
-}
+} // RBC
+} // Plane
+} // Boussinesq
+} // Equations
+} // QuICC

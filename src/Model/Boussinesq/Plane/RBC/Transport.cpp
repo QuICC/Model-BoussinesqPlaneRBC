@@ -1,28 +1,21 @@
 /** 
  * @file Transport.cpp
  * @brief Source of the implementation of the transport equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
- * @author Philippe Marti \<philippe.marti@colorado.edu\>
  */
-
-// Configuration includes
-//
 
 // System includes
 //
 
-// External includes
-//
-
-// Class include
-//
-#include "QuICC/Model/Boussinesq/Plane/RBC/Transport.hpp"
-
 // Project includes
 //
-#include "QuICC/Base/Typedefs.hpp"
-#include "QuICC/Base/MathConstants.hpp"
-#include "QuICC/Enums/NonDimensional.hpp"
-#include "QuICC/PhysicalOperators/VelocityHeatAdvection.hpp"
+#include "QuICC/Model/Boussinesq/Plane/RBC/Transport.hpp"
+#include "QuICC/Typedefs.hpp"
+#include "QuICC/Math/Constants.hpp"
+#include "QuICC/PhysicalNames/Velocity.hpp"
+#include "QuICC/PhysicalNames/Temperature.hpp"
+#include "QuICC/SolveTiming/Prognostic.hpp"
+#include "QuICC/Transform/Path/ScalarNl.hpp"
+#include "QuICC/Model/Boussinesq/Plane/RBC/TransportKernel.hpp"
 
 namespace QuICC {
 
@@ -34,51 +27,67 @@ namespace Plane {
 
 namespace RBC {
 
-   Transport::Transport(SharedEquationParameters spEqParams)
-      : IScalarEquation(spEqParams)
+   Transport::Transport(SharedEquationParameters spEqParams, SpatialScheme::SharedCISpatialScheme spScheme, std::shared_ptr<Model::IModelBackend> spBackend)
+      : IScalarEquation(spEqParams, spScheme, spBackend)
    {
       // Set the variable requirements
       this->setRequirements();
    }
 
-   Transport::~Transport()
-   {
-   }
-
    void Transport::setCoupling()
    {
-      this->defineCoupling(FieldComponents::Spectral::SCALAR, CouplingInformation::PROGNOSTIC, 0, true, false);
+      auto features = defaultCouplingFeature();
+      features.at(CouplingFeature::Nonlinear) = true;
+
+      this->defineCoupling(FieldComponents::Spectral::SCALAR, CouplingInformation::PROGNOSTIC, 0, features);
    }
 
-   void Transport::computeNonlinear(Datatypes::PhysicalScalarType& rNLComp, FieldComponents::Physical::Id id) const
+   void Transport::setNLComponents()
    {
-      // Assert on scalar component is used
-      assert(id == FieldComponents::Physical::SCALAR);
+      this->addNLComponent(FieldComponents::Spectral::SCALAR, Transform::Path::ScalarNl::id());
+   }
 
-      /// 
-      /// Computation of the advection:
-      ///   \f$ \left(\vec u\cdot\nabla\right)\theta\f$
-      ///
-      Physical::VelocityHeatAdvection<FieldComponents::Physical::X,FieldComponents::Physical::Y,FieldComponents::Physical::Z>::set(rNLComp, this->vector(PhysicalNames::VELOCITY).dom(0).phys(), this->unknown().dom(0).grad(), 1.0);
+   void Transport::initNLKernel(const bool force)
+   {
+      // Initialize if empty or forced
+      if(force || !this->mspNLKernel)
+      {
+         // Initialize the physical kernel
+         auto spNLKernel = std::make_shared<Physical::Kernel::TransportKernel>();
+         spNLKernel->setScalar(this->name(), this->spUnknown());
+         spNLKernel->setVector(PhysicalNames::Velocity::id(), this->spVector(PhysicalNames::Velocity::id()));
+         spNLKernel->init(1.0);
+         this->mspNLKernel = spNLKernel;
+      }
    }
 
    void Transport::setRequirements()
    {
       // Set temperatur as equation unknown
-      this->setName(PhysicalNames::TEMPERATURE);
+      this->setName(PhysicalNames::Temperature::id());
 
       // Set solver timing
-      this->setSolveTiming(SolveTiming::PROGNOSTIC);
+      this->setSolveTiming(SolveTiming::Prognostic::id());
+
+      // Forward transform generates nonlinear RHS
+      this->setForwardPathsType(FWD_IS_NONLINEAR);
+
+      // Get reference to spatial scheme
+      const auto& ss = this->ss();
 
       // Add temperature to requirements: is scalar?, need spectral?, need physical?, need diff?
-      this->mRequirements.addField(PhysicalNames::TEMPERATURE, FieldRequirement(true, true, false, true));
+      auto& tempReq = this->mRequirements.addField(PhysicalNames::Temperature::id(), FieldRequirement(true, ss.spectral(), ss.physical()));
+      tempReq.enableSpectral();
+      tempReq.enableGradient();
 
-      // Add X velocity to requirements: is scalar?, need spectral?, need physical?, need diff?
-      this->mRequirements.addField(PhysicalNames::VELOCITY, FieldRequirement(false, true, true, false));
+      // Add velocity to requirements: is scalar?, need spectral?, need physical?, need diff?(, need curl?)
+      auto& velReq = this->mRequirements.addField(PhysicalNames::Velocity::id(), FieldRequirement(false, ss.spectral(), ss.physical()));
+      velReq.enableSpectral();
+      velReq.enablePhysical();
    }
 
-}
-}
-}
-}
-}
+} // RBC
+} // Plane
+} // Boussinesq
+} // Equations
+} // QuICC

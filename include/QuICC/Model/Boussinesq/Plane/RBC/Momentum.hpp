@@ -1,26 +1,18 @@
 /**
  * @file Momentum.hpp
  * @brief Implementation of the vector momentum equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
- * @author Philippe Marti \<philippe.marti@colorado.edu\>
  */
 
 #ifndef QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
 #define QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
 
-// Configuration includes
+// System includes
 //
 #include <memory>
 
-// System includes
-//
-
-// External includes
-//
-
 // Project includes
 //
-#include "QuICC/Base/Typedefs.hpp"
-#include "QuICC/TypeSelectors/ScalarSelector.hpp"
+#include "QuICC/Typedefs.hpp"
 #include "QuICC/Equations/IVectorEquation.hpp"
 
 namespace QuICC {
@@ -44,44 +36,41 @@ namespace RBC {
           *
           * @param spEqParams    Shared equation parameters
           */
-         Momentum(SharedEquationParameters spEqParams);
+         Momentum(SharedEquationParameters spEqParams, SpatialScheme::SharedCISpatialScheme spScheme, std::shared_ptr<Model::IModelBackend> spBackend);
 
          /**
           * @brief Simple empty destructor
           */
-         virtual ~Momentum();
+         virtual ~Momentum() = default;
 
          /**
-          * @brief Compute the nonlinear interaction term
-          *
-          * @param rNLComp Nonlinear term component
-          * @param id      ID of the component (allows for a more general implementation)
+          * @brief Initialize nonlinear interaction kernel
           */
-         virtual void computeNonlinear(Datatypes::PhysicalScalarType& rNLComp, FieldComponents::Physical::Id id) const;
+         virtual void initNLKernel(const bool force = false) override;
 
       protected:
          /**
           * @brief Set variable requirements
           */
-         virtual void setRequirements();
+         virtual void setRequirements() override;
 
          /**
           * @brief Set the equation coupling information
           */
-         virtual void setCoupling();
+         virtual void setCoupling() override;
 
          /**
           * @brief Set the nonlinear integration components
           */
-         virtual void setNLComponents();
+         virtual void setNLComponents() override;
 
       private:
    };
 
-}
-}
-}
-}
-}
+} // RBC
+} // Plane
+} // Boussinesq
+} // Equations
+} // QuICC
 
 #endif // QUICC_EQUATIONS_BOUSSINESQ_PLANE_RBC_MOMENTUM_HPP
