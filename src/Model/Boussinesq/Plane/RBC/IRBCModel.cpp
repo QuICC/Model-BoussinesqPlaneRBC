@@ -161,34 +161,21 @@ namespace RBC {
    {
       // Shared pointer to basic field visualizer
       Equations::SharedScalarFieldVisualizer spScalar;
-      Equations::SharedScalarFieldTrivialVisualizer spSTrivial;
       Equations::SharedVectorFieldVisualizer spVector;
 
       // Add temperature field visualization
-      spScalar = spVis->addEquation<Equations::ScalarFieldVisualizer>();
+      spScalar = spVis->addEquation<Equations::ScalarFieldVisualizer>(this->spBackend());
       spScalar->setFields(true, false);
       spScalar->setIdentity(PhysicalNames::Temperature::id());
 
-      // Add mean temperature field visualization
-      spSTrivial = spVis->addEquation<Equations::ScalarFieldTrivialVisualizer>();
-      spSTrivial->setFields(true, false);
-      spSTrivial->setIdentity(PhysicalNames::MeanTemperature::id());
-
-      // Add fluctuating temperature field visualization
-      spSTrivial = spVis->addEquation<Equations::ScalarFieldTrivialVisualizer>();
-      spSTrivial->setFields(true, false);
-      spSTrivial->setIdentity(PhysicalNames::FluctTemperature::id());
-
       // Add velocity fields visualization
-      spVector = spVis->addEquation<Equations::VectorFieldVisualizer>();
+      spVector = spVis->addEquation<Equations::VectorFieldVisualizer>(this->spBackend());
       spVector->setFields(true, false, true);
       spVector->setIdentity(PhysicalNames::Velocity::id());
 
       // Add output file
       auto spOut = std::make_shared<Io::Variable::VisualizationFileWriter>(spVis->ss().tag());
       spOut->expect(PhysicalNames::Temperature::id());
-      spOut->expect(PhysicalNames::MeanTemperature::id());
-      spOut->expect(PhysicalNames::FluctTemperature::id());
       spOut->expect(PhysicalNames::Velocity::id());
       spVis->addHdf5OutputFile(spOut);
    }
