@@ -77,11 +77,6 @@ namespace Explicit {
          SpectralFieldIds implicitFields(const SpectralFieldId& fId) const;
 
          /**
-          * @brief Set field coupling in explicit linear terms
-          */
-         SpectralFieldIds explicitLinearFields(const SpectralFieldId& fId) const;
-
-         /**
           * @brief Set field coupling in explicit nonlinear terms
           */
          SpectralFieldIds explicitNonlinearFields(const SpectralFieldId& fId) const;

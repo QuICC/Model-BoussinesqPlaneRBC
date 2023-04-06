@@ -82,7 +82,7 @@ namespace RBC {
 
    std::vector<bool> IRBCBackend::isPeriodicBox() const
    {
-      std::vector<bool> periodic = {false, false, false};
+      std::vector<bool> periodic = {false, true, true};
 
       return periodic;
    }

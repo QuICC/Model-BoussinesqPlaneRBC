@@ -70,22 +70,10 @@ namespace Explicit {
 
    ModelBackend::SpectralFieldIds ModelBackend::implicitFields(const SpectralFieldId& fId) const
    {
-      SpectralFieldIds fields = {fId};
-
-      return fields;
-   }
-
-   ModelBackend::SpectralFieldIds ModelBackend::explicitLinearFields(const SpectralFieldId& fId) const
-   {
-      SpectralFieldIds fields;
-      if(fId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
-      {
-         fields.push_back(std::make_pair(PhysicalNames::Temperature::id(),FieldComponents::Spectral::SCALAR));
-      }
-      else if(fId == std::make_pair(PhysicalNames::Temperature::id(),FieldComponents::Spectral::SCALAR))
-      {
-         fields.push_back(std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL));
-      }
+      auto velTor = std::make_pair(PhysicalNames::Velocity::id(), FieldComponents::Spectral::TOR);
+      auto velPol = std::make_pair(PhysicalNames::Velocity::id(), FieldComponents::Spectral::TOR);
+      auto temp = std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR);
+      SpectralFieldIds fields = {velTor, velPol, temp};
 
       return fields;
    }
@@ -120,7 +108,7 @@ namespace Explicit {
       info.im = this->implicitFields(fId);
 
       // Explicit linear terms
-      info.exL = this->explicitLinearFields(fId);
+      info.exL.clear();
 
       // Explicit nonlinear terms
       info.exNL = this->explicitNonlinearFields(fId);
@@ -455,33 +443,7 @@ namespace Explicit {
       // Explicit linear operator
       if(opId == ModelOperator::ExplicitLinear::id())
       {
-         if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL) &&
-               colId == std::make_pair(PhysicalNames::Temperature::id(),FieldComponents::Spectral::SCALAR))
-         {
-            auto Ra = nds.find(NonDimensional::Rayleigh::id())->second->value();
-
-            if(this->useSplitEquation())
-            {
-               SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
-               decMat.real() = Ra*spasm.mat();
-            }
-            else
-            {
-               SparseSM::Chebyshev::LinearMap::I4 spasm(nN, nN, zi, zo);
-               decMat.real() = Ra*spasm.mat();
-            }
-         }
-         else if(rowId == std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR) && 
-               colId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
-         {
-            SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
-            decMat.real() = -spasm.mat();
-         }
-         else
-         {
-            // Nothing to be done
-            throw std::logic_error("There are no explicit linear operators");
-         }
+         throw std::logic_error("There are no explicit linear operators");
       }
       // Explicit nonlinear operator
       else if(opId == ModelOperator::ExplicitNonlinear::id())
