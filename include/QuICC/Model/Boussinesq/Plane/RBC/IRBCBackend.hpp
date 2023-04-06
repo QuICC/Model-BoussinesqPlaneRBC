@@ -74,22 +74,22 @@ namespace RBC {
          /**
           * @brief Get operator block information
           */
-         void blockInfo(int& tN, int& gN, ArrayI& shift, int& rhs, const SpectralFieldId& fId, const Resolution& res, const MHDFloat l, const BcMap& bcs) const;
+         void blockInfo(int& tN, int& gN, ArrayI& shift, int& rhs, const SpectralFieldId& fId, const Resolution& res, const MHDFloat k1, const MHDFloat k2, const BcMap& bcs) const;
 
          /**
           * @brief Apply tau line for boundary condition
           */
-         void applyTau(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int l, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds, const bool isSplitOperator) const;
+         void applyTau(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int k1, const int k2, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds, const bool isSplitOperator) const;
 
          /**
           * @brief Boundary condition stencil
           */
-         virtual void stencil(SparseMatrix& mat, const SpectralFieldId& fId, const int l, const Resolution& res, const bool makeSquare, const BcMap& bcs, const NonDimensional::NdMap& nds) const;
+         virtual void stencil(SparseMatrix& mat, const SpectralFieldId& fId, const int k1, const int k2, const Resolution& res, const bool makeSquare, const BcMap& bcs, const NonDimensional::NdMap& nds) const;
 
          /**
           * @brief Apply galerkin stencil for boundary condition
           */
-         void applyGalerkinStencil(SparseMatrix& decMat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int l, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds) const;
+         void applyGalerkinStencil(SparseMatrix& decMat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int k1, const int k2, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds) const;
 
       private:
    };

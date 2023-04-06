@@ -22,13 +22,13 @@
 #include "QuICC/Io/Variable/StateFileReader.hpp"
 #include "QuICC/Io/Variable/StateFileWriter.hpp"
 #include "QuICC/Io/Variable/VisualizationFileWriter.hpp"
-//#include "QuICC/Io/Variable/Cartesian1DScalarEnergyWriter.hpp"
-//#include "QuICC/Io/Variable/Cartesian1DTorPolEnergyWriter.hpp"
+#include "QuICC/Io/Variable/Cartesian1DScalarEnergyWriter.hpp"
+#include "QuICC/Io/Variable/Cartesian1DTorPolEnergyWriter.hpp"
 //#include "QuICC/Io/Variable/Cartesian1DNusseltDZWriter.hpp"
 #include "QuICC/Generator/States/RandomScalarState.hpp"
 #include "QuICC/Generator/States/RandomVectorState.hpp"
-//#include "QuICC/Generator/States/CartesianExactScalarState.hpp"
-//#include "QuICC/Generator/States/CartesianExactVectorState.hpp"
+#include "QuICC/Generator/States/CartesianExactScalarState.hpp"
+#include "QuICC/Generator/States/CartesianExactVectorState.hpp"
 #include "QuICC/Generator/Visualizers/ScalarFieldVisualizer.hpp"
 #include "QuICC/Generator/Visualizers/ScalarFieldTrivialVisualizer.hpp"
 #include "QuICC/Generator/Visualizers/VectorFieldVisualizer.hpp"
@@ -65,42 +65,90 @@ namespace RBC {
 
    void IRBCModel::addStates(SharedStateGenerator spGen)
    {
-//      // Generate "exact" solutions (trigonometric or monomial)
-//      if(false)
-//      {
-//         // Shared pointer to equation
-//         Equations::SharedCartesianExactScalarState spScalar;
-//         Equations::SharedCartesianExactVectorState spVector;
-//
-//         // Add vector exact initial state generator
-//         spVector = spGen->addVectorEquation<Equations::CartesianExactVectorState>();
-//         spVector->setIdentity(PhysicalNames::VELOCITY);
-//         spVector->setStateType(Equations::CartesianExactStateIds::TORPOLTFF);
-//
-//         // Add scalar exact initial state generator
-//         spScalar = spGen->addScalarEquation<Equations::CartesianExactScalarState>();
-//         spScalar->setIdentity(PhysicalNames::TEMPERATURE);
-//         spScalar->setStateType(Equations::CartesianExactStateIds::PLANFORMSQUARES);
-//         spScalar->setModeOptions(1e0, 10.0, 1e0, 10.0);
-//
-//      // Generate random spectrum
-//      } else
-//      {
-//         // Shared pointer to random initial state equation
-//         Equations::SharedRandomScalarState spScalar;
-//         Equations::SharedRandomVectorState spVector;
-//
-//         // Add scalar random initial state generator 
-//         spVector = spGen->addEquation<Equations::RandomVectorState>();
-//         spVector->setIdentity(PhysicalNames::VELOCITY);
-//         spVector->setSpectrum(FieldComponents::Spectral::TOR, -1e-6, 1e-6, 1e4, 1e4, 1e4);
-//         spVector->setSpectrum(FieldComponents::Spectral::POL, -1e-6, 1e-6, 1e4, 1e4, 1e4);
-//
-//         // Add scalar random initial state generator
-//         spScalar = spGen->addEquation<Equations::RandomScalarState>();
-//         spScalar->setIdentity(PhysicalNames::TEMPERATURE);
-//         spScalar->setSpectrum(-1e-6, 1e-6, 1e4, 1e4, 1e4);
-//      }
+      // Shared pointer to equation
+      Equations::SharedCartesianExactScalarState spScalar;
+      Equations::SharedCartesianExactVectorState spVector;
+
+      // Add temperature initial state generator
+      spScalar = spGen->addEquation<Equations::CartesianExactScalarState>(this->spBackend());
+      spScalar->setIdentity(PhysicalNames::Temperature::id());
+      switch(0)
+      {
+         case 0:
+            {
+               spScalar->setPhysicalNoise(1e-15);
+            }
+            break;
+
+         case 1:
+            {
+               spScalar->setPhysicalConstant(1.0);
+            }
+            break;
+
+         case 2:
+            {
+               //spScalar->setStateType(Equations::CartesianExactStateIds::PLANFORMSQUARES);
+               //spScalar->setModeOptions(1e0, 10.0, 1e0, 10.0);
+            }
+            break;
+
+         case 3:
+            {
+               auto spKernel = std::make_shared<Spectral::Kernel::MakeRandom>(spGen->ss().has(SpatialScheme::Feature::ComplexSpectrum));
+               std::vector<MHDFloat> ratios = {1e2, 1e2, 1e2};
+               spKernel->setRatio(ratios);
+               spKernel->init(-1e-15, 1e-15);
+               spVector->setSrcKernel(FieldComponents::Spectral::SCALAR, spKernel);
+            }
+            break;
+      }
+
+      // Add velocity initial state generator
+      spVector = spGen->addEquation<Equations::CartesianExactVectorState>(this->spBackend());
+      spVector->setIdentity(PhysicalNames::Velocity::id());
+      switch(2)
+      {
+         case 0:
+            {
+               spScalar->setPhysicalNoise(1e-15);
+            }
+            break;
+
+         case 1:
+            {
+               spScalar->setPhysicalConstant(1.0);
+            }
+            break;
+
+         case 2:
+            {
+               auto spKernel = std::make_shared<Spectral::Kernel::MakeRandom>(spGen->ss().has(SpatialScheme::Feature::ComplexSpectrum));
+               std::vector<MHDFloat> ratios = {1e2, 1e2, 1e2};
+               spKernel->setRatio(ratios);
+               spKernel->init(-1e-15, 1e-15);
+               spVector->setSrcKernel(FieldComponents::Spectral::TOR, spKernel);
+               spVector->setSrcKernel(FieldComponents::Spectral::POL, spKernel);
+            }
+            break;
+
+         case 3:
+            {
+               auto spKernel = std::make_shared<Spectral::Kernel::MakeRandom>(spGen->ss().has(SpatialScheme::Feature::ComplexSpectrum));
+               std::vector<MHDFloat> ratios = {1e4, 1e4, 1e4};
+               spKernel->setRatio(ratios);
+               spKernel->init(-1e-4, 1e-4);
+               spVector->setSrcKernel(FieldComponents::Spectral::TOR, spKernel);
+               spVector->setSrcKernel(FieldComponents::Spectral::POL, spKernel);
+            }
+            break;
+
+         case 4:
+            {
+               //spVector->setStateType(Equations::CartesianExactStateIds::TORPOLTFF);
+            }
+            break;
+      }
 
       // Add output file
       auto spOut = std::make_shared<Io::Variable::StateFileWriter>(spGen->ss().tag(), spGen->ss().has(SpatialScheme::Feature::RegularSpectrum));
@@ -162,12 +210,12 @@ namespace RBC {
 
    void IRBCModel::addAsciiOutputFiles(SharedSimulation spSim)
    {
-//      // Create temperature energy writer
-//      this->enableAsciiFile<Io::Variable::Cartesian1DScalarEnergyWriter>("temperature_energy", "temperature", PhysicalNames::Temperature::id(), spSim);
-//
-//      // Create kinetic energy writer
-//      this->enableAsciiFile<Io::Variable::CartesianTorPolEnergyWriter>("kinetic_energy", "kinetic", PhysicalNames::Velocity::id(), spSim);
-//
+      // Create temperature energy writer
+      this->enableAsciiFile<Io::Variable::Cartesian1DScalarEnergyWriter>("temperature_energy", "temperature", PhysicalNames::Temperature::id(), spSim);
+
+      // Create kinetic energy writer
+      this->enableAsciiFile<Io::Variable::Cartesian1DTorPolEnergyWriter>("kinetic_energy", "kinetic", PhysicalNames::Velocity::id(), spSim);
+
 //      // Create nusselt number writer
 //      this->enableAsciiFile<Io::Variable::Cartesian1DNusseltDZWriter>("temperature_nusselt", "temperature_", PhysicalNames::Temperature::id(), spSim);
    }

@@ -41,9 +41,9 @@
 #include "QuICC/Equations/CouplingIndexType.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/Id.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/I2.hpp"
-//#include "QuICC/SparseSM/Chebyshev/LinearMap/I2D2.hpp"
-//#include "QuICC/SparseSM/Chebyshev/LinearMap/I4D2.hpp"
-//#include "QuICC/SparseSM/Chebyshev/LinearMap/I4D4.hpp"
+#include "QuICC/SparseSM/Chebyshev/LinearMap/I2Lapl.hpp"
+#include "QuICC/SparseSM/Chebyshev/LinearMap/I4Lapl.hpp"
+#include "QuICC/SparseSM/Chebyshev/LinearMap/I4Lapl2.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/I4.hpp"
 
 namespace QuICC {
@@ -134,9 +134,11 @@ namespace Explicit {
 
    void ModelBackend::blockSize(int& tN, int& gN, ArrayI& shift, int& rhs, const SpectralFieldId& fId, const Resolution& res, const std::vector<MHDFloat>& eigs, const BcMap& bcs) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
-      this->blockInfo(tN, gN, shift, rhs, fId, res, l, bcs);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
+
+      this->blockInfo(tN, gN, shift, rhs, fId, res, k1, k2, bcs);
    }
 
    void ModelBackend::operatorInfo(OperatorInfo& info, const SpectralFieldId& fId, const Resolution& res, const Equations::Tools::ICoupling& coupling, const BcMap& bcs) const
@@ -175,17 +177,18 @@ namespace Explicit {
 
    void ModelBackend::implicitBlock(DecoupledZSparse& decMat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int matIdx, const Resolution& res, const std::vector<MHDFloat>& eigs, const NonDimensional::NdMap& nds, const bool isSplitOperator) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
 
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto zi = nds.find(NonDimensional::Lower1d::id())->second->value();
       auto zo = nds.find(NonDimensional::Upper1d::id())->second->value();
 
       if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::TOR) && rowId == colId)
       {
-         SparseSM::Chebyshev::LinearMap::I2Y2SphLapl spasm(nN, nN, zi, zo, l);
+         SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
          decMat.real() = spasm.mat();
       }
       else if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL) && rowId == colId)
@@ -194,18 +197,18 @@ namespace Explicit {
          {
             if(isSplitOperator)
             {
-               SparseSM::Chebyshev::LinearMap::I2Y2SphLapl spasm(nN, nN, zi, zo, l);
+               SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
                decMat.real() = spasm.mat();
             }
             else
             {
-               SparseSM::Chebyshev::LinearMap::I2Y2SphLapl spasm(nN, nN, zi, zo, l);
+               SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
                decMat.real() = spasm.mat();
             }
          }
          else
          {
-            SparseSM::Chebyshev::LinearMap::I4Y4SphLapl2 spasm(nN, nN, zi, zo, l);
+            SparseSM::Chebyshev::LinearMap::I4Lapl2 spasm(nN, nN, zi, zo, k1, k2);
             decMat.real() = spasm.mat();
          }
       }
@@ -213,7 +216,7 @@ namespace Explicit {
       {
          auto Pr = nds.find(NonDimensional::Prandtl::id())->second->value();
 
-         SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
+         SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
          decMat.real() = (1.0/Pr)*spasm.mat();
       }
       else
@@ -224,10 +227,11 @@ namespace Explicit {
 
    void ModelBackend::timeBlock(DecoupledZSparse& decMat, const SpectralFieldId& fieldId, const int matIdx, const Resolution& res, const std::vector<MHDFloat>& eigs, const NonDimensional::NdMap& nds) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
 
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto zi = nds.find(NonDimensional::Lower1d::id())->second->value();
       auto zo = nds.find(NonDimensional::Upper1d::id())->second->value();
@@ -246,7 +250,7 @@ namespace Explicit {
          }
          else
          {
-            SparseSM::Chebyshev::LinearMap::I4Y4SphLapl spasm(nN, nN, zi, zo, l);
+            SparseSM::Chebyshev::LinearMap::I4Lapl spasm(nN, nN, zi, zo, k1, k2);
             decMat.real() = spasm.mat();
          }
       }
@@ -259,10 +263,11 @@ namespace Explicit {
 
    void ModelBackend::splitBoundaryValueBlock(DecoupledZSparse& decMat, const SpectralFieldId& fieldId, const int matIdx, const Resolution& res, const std::vector<MHDFloat>& eigs, const NonDimensional::NdMap& nds) const
    {
-      assert(eigs.size() == 1);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
 
-      int l = eigs.at(0);
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       if(fieldId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
       {
@@ -279,8 +284,9 @@ namespace Explicit {
 
    void ModelBackend::modelMatrix(DecoupledZSparse& rModelMatrix, const std::size_t opId, const Equations::CouplingInformation::FieldId_range imRange, const int matIdx, const std::size_t bcType, const Resolution& res, const std::vector<MHDFloat>& eigs, const BcMap& bcs, const NonDimensional::NdMap& nds) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
 
       // Time operator
       if(opId == ModelOperator::Time::id())
@@ -295,11 +301,11 @@ namespace Explicit {
             // Apply boundary condition
             if(needStencil)
             {
-               this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pRowId, l, res, bcs, nds);
+               this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pRowId, k1, k2, res, bcs, nds);
             }
             else if(needTau)
             {
-               this->applyTau(rModelMatrix.real(), *pRowId, *pRowId, l, res, bcs, nds, false);
+               this->applyTau(rModelMatrix.real(), *pRowId, *pRowId, k1, k2, res, bcs, nds, false);
             }
          }
       }
@@ -319,11 +325,11 @@ namespace Explicit {
                // Apply boundary condition
                if(needStencil)
                {
-                  this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pColId, l, res, bcs, nds);
+                  this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pColId, k1, k2, res, bcs, nds);
                }
                else if(needTau)
                {
-                  this->applyTau(rModelMatrix.real(), *pRowId, *pColId, l, res, bcs, nds, isSplit);
+                  this->applyTau(rModelMatrix.real(), *pRowId, *pColId, k1, k2, res, bcs, nds, isSplit);
                }
             }
          }
@@ -335,7 +341,7 @@ namespace Explicit {
          bool needStencil = this->useGalerkin();
          bool needTau = (bcType == ModelOperatorBoundary::SolverHasBc::id());
 
-         auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+         auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
          for(auto pRowId = imRange.first; pRowId != imRange.second; pRowId++)
          {
@@ -346,11 +352,11 @@ namespace Explicit {
                // Apply boundary condition
                if(needStencil)
                {
-                  this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pColId, l, res, bcs, nds);
+                  this->applyGalerkinStencil(rModelMatrix.real(), *pRowId, *pColId, k1, k2, res, bcs, nds);
                }
                else if(needTau)
                {
-                  this->applyTau(rModelMatrix.real(), *pRowId, *pColId, l, res, bcs, nds, isSplit);
+                  this->applyTau(rModelMatrix.real(), *pRowId, *pColId, k1, k2, res, bcs, nds, isSplit);
                }
             }
          }
@@ -371,17 +377,20 @@ namespace Explicit {
 
    void ModelBackend::galerkinStencil(SparseMatrix& mat, const SpectralFieldId& fieldId, const int matIdx, const Resolution& res, const std::vector<MHDFloat>& eigs, const bool makeSquare, const BcMap& bcs, const NonDimensional::NdMap& nds) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
-      this->stencil(mat, fieldId, l, res, makeSquare, bcs, nds);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
+
+      this->stencil(mat, fieldId, k1, k2, res, makeSquare, bcs, nds);
    }
 
    void ModelBackend::explicitBlock(DecoupledZSparse& decMat, const SpectralFieldId& rowId, const std::size_t opId,  const SpectralFieldId colId, const int matIdx, const Resolution& res, const std::vector<MHDFloat>& eigs, const BcMap& bcs, const NonDimensional::NdMap& nds) const
    {
-      assert(eigs.size() == 1);
-      int l = eigs.at(0);
+      assert(eigs.size() == 2);
+      int k1 = eigs.at(0);
+      int k2 = eigs.at(1);
 
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto zi = nds.find(NonDimensional::Lower1d::id())->second->value();
       auto zo = nds.find(NonDimensional::Upper1d::id())->second->value();
@@ -393,37 +402,24 @@ namespace Explicit {
          if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL) &&
                colId == std::make_pair(PhysicalNames::Temperature::id(),FieldComponents::Spectral::SCALAR))
          {
-            auto Ra = effectiveRa(nds);
+            auto Ra = nds.find(NonDimensional::Rayleigh::id())->second->value();
 
             if(this->useSplitEquation())
             {
-               SparseSM::Chebyshev::LinearMap::I2Y2 spasm(nN, nN, zi, zo);
+               SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
                decMat.real() = Ra*spasm.mat();
             }
             else
             {
-               SparseSM::Chebyshev::LinearMap::I4Y4 spasm(nN, nN, zi, zo);
+               SparseSM::Chebyshev::LinearMap::I4 spasm(nN, nN, zi, zo);
                decMat.real() = Ra*spasm.mat();
             }
          }
          else if(rowId == std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR) && 
                colId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
          {
-            auto heatingMode = nds.find(NonDimensional::Heating::id())->second->value();
-            auto bg = effectiveBg(nds);
-            auto dl = static_cast<MHDFloat>(l);
-            auto ll1 = dl*(dl + 1.0);
-
-            if(heatingMode == 0)
-            {
-               SparseSM::Chebyshev::LinearMap::I2Y2 spasm(nN, nN, zi, zo);
-               decMat.real() = -bg*ll1*spasm.mat();
-            }
-            else
-            {
-               SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
-               decMat.real() = -bg*ll1*spasm.mat();
-            }
+            SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
+            decMat.real() = -spasm.mat();
          }
          else
          {

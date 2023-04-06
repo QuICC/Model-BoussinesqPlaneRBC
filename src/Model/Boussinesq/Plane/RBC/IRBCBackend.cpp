@@ -34,6 +34,7 @@
 #include "QuICC/NonDimensional/Upper1d.hpp"
 #include "QuICC/Resolutions/Tools/IndexCounter.hpp"
 #include "QuICC/Equations/CouplingIndexType.hpp"
+#include "QuICC/SparseSM/Chebyshev/LinearMap/Id.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/Boundary/ICondition.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/Boundary/Operator.hpp"
 #include "QuICC/SparseSM/Chebyshev/LinearMap/Boundary/Value.hpp"
@@ -96,9 +97,9 @@ namespace RBC {
       return params;
    }
 
-   void IRBCBackend::applyTau(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int l, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds, const bool isSplitOperator) const
+   void IRBCBackend::applyTau(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int k1, const int k2, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds, const bool isSplitOperator) const
    {
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto bcId = bcs.find(rowId.first)->second;
 
@@ -196,9 +197,9 @@ namespace RBC {
       mat += bcOp.mat();
    }
 
-   void IRBCBackend::stencil(SparseMatrix& mat, const SpectralFieldId& fieldId, const int l, const Resolution& res, const bool makeSquare, const BcMap& bcs, const NonDimensional::NdMap& nds) const
+   void IRBCBackend::stencil(SparseMatrix& mat, const SpectralFieldId& fieldId, const int k1, const int k2, const Resolution& res, const bool makeSquare, const BcMap& bcs, const NonDimensional::NdMap& nds) const
    {
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto bcId = bcs.find(fieldId.first)->second;
 
@@ -265,15 +266,15 @@ namespace RBC {
       }
    }
 
-   void IRBCBackend::applyGalerkinStencil(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int l, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds) const
+   void IRBCBackend::applyGalerkinStencil(SparseMatrix& mat, const SpectralFieldId& rowId, const SpectralFieldId& colId, const int k1, const int k2, const Resolution& res, const BcMap& bcs, const NonDimensional::NdMap& nds) const
    {
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
 
       auto zi = nds.find(NonDimensional::Lower1d::id())->second->value();
       auto zo = nds.find(NonDimensional::Upper1d::id())->second->value();
 
       auto S = mat;
-      this->stencil(S, colId, l, res, false, bcs, nds);
+      this->stencil(S, colId, k1, k2, res, false, bcs, nds);
 
       auto s = this->nBc(rowId);
       SparseSM::Chebyshev::LinearMap::Id qId(nN-s, nN, zi, zo, 0, s);
@@ -301,9 +302,9 @@ namespace RBC {
       return nBc;
    }
 
-   void IRBCBackend::blockInfo(int& tN, int& gN, ArrayI& shift, int& rhs, const SpectralFieldId& fId, const Resolution& res, const MHDFloat l, const BcMap& bcs) const
+   void IRBCBackend::blockInfo(int& tN, int& gN, ArrayI& shift, int& rhs, const SpectralFieldId& fId, const Resolution& res, const MHDFloat k1, const MHDFloat k2, const BcMap& bcs) const
    {
-      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, l)(0);
+      auto nN = res.counter().dimensions(Dimensions::Space::SPECTRAL, k1)(0);
       tN = nN;
 
       int shiftR = this->nBc(fId);
