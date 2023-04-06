@@ -14,6 +14,9 @@
 #include "QuICC/PhysicalNames/Velocity.hpp"
 #include "QuICC/SolveTiming/Prognostic.hpp"
 #include "QuICC/SpatialScheme/ISpatialScheme.hpp"
+#include "QuICC/Transform/Path/I2CurlNl.hpp"
+#include "QuICC/Transform/Path/NegI2CurlCurlNl.hpp"
+#include "QuICC/Transform/Path/NegI4CurlCurlNl.hpp"
 #include "QuICC/Model/Boussinesq/Plane/RBC/MomentumKernel.hpp"
 
 namespace QuICC {
@@ -45,9 +48,16 @@ namespace RBC {
 
    void Momentum::setNLComponents()
    {
-      this->addNLComponent(FieldComponents::Spectral::TOR, 0);
+      this->addNLComponent(FieldComponents::Spectral::TOR, Transform::Path::I2CurlNl::id());
 
-      this->addNLComponent(FieldComponents::Spectral::POL, 0);
+      if(this->couplingInfo(FieldComponents::Spectral::POL).isSplitEquation())
+      {
+         this->addNLComponent(FieldComponents::Spectral::POL, Transform::Path::NegI2CurlCurlNl::id());
+      }
+      else
+      {
+         this->addNLComponent(FieldComponents::Spectral::POL, Transform::Path::NegI4CurlCurlNl::id());
+      }
    }
 
    void Momentum::initNLKernel(const bool force)

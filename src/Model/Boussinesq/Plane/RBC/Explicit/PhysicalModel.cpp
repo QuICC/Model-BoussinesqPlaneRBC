@@ -26,7 +26,7 @@ namespace Explicit {
 
    std::string PhysicalModel::PYMODULE()
    {
-      return "boussinesq.plane.rbc.explcit.physical_model";
+      return "boussinesq.plane.rbc.explicit.physical_model";
    }
 
    void PhysicalModel::init()

@@ -326,7 +326,9 @@ class PhysicalModel(PhysicalModelConfig, base_model.BaseModel):
                 mat = geo.i2(res[0], zi, zo, bc, (kx**2 + ky**2)**2)
                 bc[0] = min(bc[0], 0)
                 mat += geo.i2d2(res[0], zi, zo, bc, -(kx**2 + ky**2))
-geo.zblk(res[0], zi, zo, bc)
+
+            elif field_col == ("velocity","pol"):
+                mat = geo.zblk(res[0], zi, zo, bc)
 
             elif field_col == ("temperature",""):
                 mat = geo.zblk(res[0], zi, zo, bc)
@@ -362,7 +364,7 @@ geo.zblk(res[0], zi, zo, bc)
                 mat += geo.i2d2(res[0], zi, zo, bc, 1.0/Pr)
 
         if mat is None:
-            raise RuntimeError("Equations are not setup properly!")
+            raise RuntimeError("Equations are not setup properly!" + str(field_row) + str(field_col))
 
         return mat
 

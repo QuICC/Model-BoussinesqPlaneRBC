@@ -188,36 +188,74 @@ namespace Explicit {
 
       if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::TOR) && rowId == colId)
       {
-         SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
-         decMat.real() = spasm.mat();
-      }
-      else if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL) && rowId == colId)
-      {
-         if(this->useSplitEquation())
+         if(k1 == 0 && k2 == 0)
          {
-            if(isSplitOperator)
-            {
-               SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
-               decMat.real() = spasm.mat();
-            }
-            else
-            {
-               SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
-               decMat.real() = spasm.mat();
-            }
+            SparseSM::Chebyshev::LinearMap::Id spasm(nN, nN, zi, zo, -2, 0);
+            decMat.real() = spasm.mat();
          }
          else
          {
-            SparseSM::Chebyshev::LinearMap::I4Lapl2 spasm(nN, nN, zi, zo, k1, k2);
-            decMat.real() = spasm.mat();
+            auto laplh = -(k1*k1 + k2*k2);
+            SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
+            decMat.real() = laplh*spasm.mat();
+         }
+      }
+      else if(rowId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
+      {
+         if(rowId == colId)
+         {
+            auto laplh = -(k1*k1 + k2*k2);
+            if(this->useSplitEquation())
+            {
+               if(isSplitOperator)
+               {
+                  SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
+                  decMat.real() = laplh*spasm.mat();
+               }
+               else
+               {
+                  SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
+                  decMat.real() = laplh*spasm.mat();
+               }
+            }
+            else
+            {
+               if(k1 == 0 && k2 == 0)
+               {
+                  SparseSM::Chebyshev::LinearMap::Id spasm(nN, nN, zi, zo, -2, 0);
+                  decMat.real() = spasm.mat();
+               }
+               else
+               {
+                  SparseSM::Chebyshev::LinearMap::I4Lapl2 spasm(nN, nN, zi, zo, k1, k2);
+                  decMat.real() = laplh*spasm.mat();
+               }
+            }
+         }
+         else if(colId == std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR))
+         {
+            auto Ra = nds.find(NonDimensional::Rayleigh::id())->second->value();
+            auto Pr = nds.find(NonDimensional::Prandtl::id())->second->value();
+
+            auto laplh = -(k1*k1 + k2*k2);
+            SparseSM::Chebyshev::LinearMap::I4 spasm(nN, nN, zi, zo);
+            decMat.real() = -(Ra/Pr)*laplh*spasm.mat();
          }
       }
       else if(rowId == std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR) && rowId == colId)
       {
          auto Pr = nds.find(NonDimensional::Prandtl::id())->second->value();
 
-         SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
-         decMat.real() = (1.0/Pr)*spasm.mat();
+         if(k1 == 0 && k2 == 0)
+         {
+            SparseSM::Chebyshev::LinearMap::Id spasm(nN, nN, zi, zo, -2, 0);
+            decMat.real() = (1.0/Pr)*spasm.mat();
+         }
+         else
+         {
+            SparseSM::Chebyshev::LinearMap::I2Lapl spasm(nN, nN, zi, zo, k1, k2);
+            decMat.real() = (1.0/Pr)*spasm.mat();
+         }
       }
       else
       {
@@ -238,8 +276,17 @@ namespace Explicit {
 
       if(fieldId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::TOR))
       {
-         SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
-         decMat.real() = spasm.mat();
+         if(k1 == 0 && k2 == 0)
+         {
+            SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
+            decMat.real() = spasm.mat();
+         }
+         else
+         {
+            auto laplh = -(k1*k1 + k2*k2);
+            SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
+            decMat.real() = laplh*spasm.mat();
+         }
       }
       else if(fieldId == std::make_pair(PhysicalNames::Velocity::id(),FieldComponents::Spectral::POL))
       {
@@ -250,8 +297,17 @@ namespace Explicit {
          }
          else
          {
-            SparseSM::Chebyshev::LinearMap::I4Lapl spasm(nN, nN, zi, zo, k1, k2);
-            decMat.real() = spasm.mat();
+            if(k1 == 0 && k2 == 0)
+            {
+               SparseSM::Chebyshev::LinearMap::I2 spasm(nN, nN, zi, zo);
+               decMat.real() = spasm.mat();
+            }
+            else
+            {
+               auto laplh = -(k1*k1 + k2*k2);
+               SparseSM::Chebyshev::LinearMap::I4Lapl spasm(nN, nN, zi, zo, k1, k2);
+               decMat.real() = laplh*spasm.mat();
+            }
          }
       }
       else if(fieldId == std::make_pair(PhysicalNames::Temperature::id(), FieldComponents::Spectral::SCALAR))

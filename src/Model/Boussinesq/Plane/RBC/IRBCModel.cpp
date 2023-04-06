@@ -198,12 +198,15 @@ namespace RBC {
       std::map<std::string,int> onOff;
       onOff.emplace("enable", 1);
 
+      std::map<std::string,int> offOn;
+      onOff.emplace("enable", 0);
+
       std::map<std::string,std::map<std::string,int> > tags;
       // kinetic
       tags.emplace("kinetic_energy", onOff);
       // temperature
       tags.emplace("temperature_energy", onOff);
-      tags.emplace("temperature_nusselt", onOff);
+      tags.emplace("temperature_nusselt", offOn);
 
       return tags;
    }
