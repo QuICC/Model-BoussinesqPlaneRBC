@@ -12,7 +12,7 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/IRBCModel.hpp"
+#include "Model/Boussinesq//Plane/RBC/IRBCModel.hpp"
 #include "QuICC/SpatialScheme/3D/TFF.hpp"
 
 namespace QuICC {

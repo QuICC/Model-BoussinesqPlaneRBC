@@ -15,7 +15,7 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/IRBCBackend.hpp"
+#include "Model/Boussinesq//Plane/RBC/IRBCBackend.hpp"
 
 namespace QuICC {
 

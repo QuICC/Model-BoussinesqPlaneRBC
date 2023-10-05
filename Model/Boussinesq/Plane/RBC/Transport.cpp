@@ -8,14 +8,14 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/Transport.hpp"
-#include "QuICC/Typedefs.hpp"
-#include "QuICC/Math/Constants.hpp"
+#include "Model/Boussinesq//Plane/RBC/Transport.hpp"
+#include "Types/Typedefs.hpp"
+#include "Types/Constants.hpp"
 #include "QuICC/PhysicalNames/Velocity.hpp"
 #include "QuICC/PhysicalNames/Temperature.hpp"
 #include "QuICC/SolveTiming/Prognostic.hpp"
 #include "QuICC/Transform/Path/ScalarNl.hpp"
-#include "QuICC/Model/Boussinesq/Plane/RBC/TransportKernel.hpp"
+#include "Model/Boussinesq//Plane/RBC/TransportKernel.hpp"
 
 namespace QuICC {
 
