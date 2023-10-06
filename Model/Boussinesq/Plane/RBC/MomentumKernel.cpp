@@ -8,7 +8,7 @@
 
 // Project includes
 //
-#include "Model/Boussinesq//Plane/RBC/MomentumKernel.hpp"
+#include "Model/Boussinesq/Plane/RBC/MomentumKernel.hpp"
 #include "QuICC/PhysicalOperators/Cross.hpp"
 
 namespace QuICC {

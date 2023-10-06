@@ -8,7 +8,7 @@
 
 // Project includes
 //
-#include "Model/Boussinesq//Plane/RBC/Momentum.hpp"
+#include "Model/Boussinesq/Plane/RBC/Momentum.hpp"
 #include "Types/Typedefs.hpp"
 #include "Types/Constants.hpp"
 #include "QuICC/PhysicalNames/Velocity.hpp"
@@ -17,7 +17,7 @@
 #include "QuICC/Transform/Path/I2CurlNl.hpp"
 #include "QuICC/Transform/Path/NegI2CurlCurlNl.hpp"
 #include "QuICC/Transform/Path/NegI4CurlCurlNl.hpp"
-#include "Model/Boussinesq//Plane/RBC/MomentumKernel.hpp"
+#include "Model/Boussinesq/Plane/RBC/MomentumKernel.hpp"
 
 namespace QuICC {
 
