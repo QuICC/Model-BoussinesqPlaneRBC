@@ -8,7 +8,7 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/TransportKernel.hpp"
+#include "Model/Boussinesq/Plane/RBC/TransportKernel.hpp"
 #include "QuICC/PhysicalOperators/VelocityHeatAdvection.hpp"
 
 namespace QuICC {

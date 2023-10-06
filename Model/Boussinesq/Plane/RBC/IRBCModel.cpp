@@ -8,9 +8,9 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/IRBCModel.hpp"
-#include "QuICC/Model/Boussinesq/Plane/RBC/Transport.hpp"
-#include "QuICC/Model/Boussinesq/Plane/RBC/Momentum.hpp"
+#include "Model/Boussinesq/Plane/RBC/IRBCModel.hpp"
+#include "Model/Boussinesq/Plane/RBC/Transport.hpp"
+#include "Model/Boussinesq/Plane/RBC/Momentum.hpp"
 #include "Model/Boussinesq/Plane/RBC/gitHash.hpp"
 #include "QuICC/Enums/FieldIds.hpp"
 #include "QuICC/PhysicalNames/Temperature.hpp"

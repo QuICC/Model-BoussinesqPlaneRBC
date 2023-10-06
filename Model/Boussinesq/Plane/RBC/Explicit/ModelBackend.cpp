@@ -9,7 +9,7 @@
 
 // Project includes
 //
-#include "QuICC/Model/Boussinesq/Plane/RBC/Explicit/ModelBackend.hpp"
+#include "Model/Boussinesq/Plane/RBC/Explicit/ModelBackend.hpp"
 #include "QuICC/ModelOperator/Time.hpp"
 #include "QuICC/ModelOperator/ImplicitLinear.hpp"
 #include "QuICC/ModelOperator/ExplicitLinear.hpp"
