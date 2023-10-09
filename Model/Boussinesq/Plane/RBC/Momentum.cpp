@@ -1,4 +1,4 @@
-/** 
+/**
  * @file Momentum.cpp
  * @brief Source of the implementation of the vector momentum equation for Rayleigh-Benard convection in a plane layer (toroidal/poloidal formulation)
  */
@@ -10,7 +10,7 @@
 //
 #include "Model/Boussinesq/Plane/RBC/Momentum.hpp"
 #include "Types/Typedefs.hpp"
-#include "Types/Constants.hpp"
+#include "Types/Math.hpp"
 #include "QuICC/PhysicalNames/Velocity.hpp"
 #include "QuICC/SolveTiming/Prognostic.hpp"
 #include "QuICC/SpatialScheme/ISpatialScheme.hpp"
