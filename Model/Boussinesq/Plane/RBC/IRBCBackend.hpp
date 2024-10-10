@@ -82,6 +82,7 @@ protected:
     * @param rowId   ID of field of equation
     * @param colId   ID of field
     * @param k1      First wave number
+    * @param opts    Additional options
     * @param res     Resolution object
     * @param bcs     Boundary conditions
     * @param nds     Nondimensional parameters
@@ -116,6 +117,7 @@ protected:
     * @param colId   ID of field
     * @param k1r     Row space first wave number
     * @param k1c     Column space first wave number
+    * @param opts    Additional options
     * @param res     Resolution object
     * @param bcs     Boundary conditions
     * @param nds     Nondimensional parameters

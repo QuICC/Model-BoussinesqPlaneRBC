@@ -146,7 +146,7 @@ void ModelBackend::operatorInfo(OperatorInfo& info, const SpectralFieldId& fId,
       int tN, gN, rhs;
       ArrayI shift(3);
 
-      this->blockInfo(tN, gN, shift, rhs, fId, res, eigs.at(0), bcs);
+      this->blockInfo(tN, gN, shift, rhs, fId, res, idx, bcs);
 
       info.tauN(idx) = tN;
       info.galN(idx) = gN;
@@ -157,7 +157,7 @@ void ModelBackend::operatorInfo(OperatorInfo& info, const SpectralFieldId& fId,
       int sN = 0;
       for (auto f: this->implicitFields(fId))
       {
-         this->blockInfo(tN, gN, shift, rhs, f, res, eigs.at(0), bcs);
+         this->blockInfo(tN, gN, shift, rhs, f, res, idx, bcs);
          sN += gN;
       }
 
