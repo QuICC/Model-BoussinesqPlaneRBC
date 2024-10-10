@@ -1,6 +1,7 @@
-/** 
+/**
  * @file PhysicalModel.hpp
- * @brief Implementation of the Boussinesq Rayleigh-Benard in a plane layer (toroidal/poloidal formulation)
+ * @brief Implementation of the Boussinesq Rayleigh-Benard in a plane layer
+ * (toroidal/poloidal formulation)
  */
 
 #ifndef QUICC_MODEL_BOUSSINESQ_PLANE_RBC_PHYSICALMODEL_HPP
@@ -27,43 +28,43 @@ namespace RBC {
 
 namespace Explicit {
 
+/**
+ * @brief Implementation of the Boussinesq Rayleigh-Benard in a plane layer
+ * (toroidal/poloidal formulation)
+ */
+class PhysicalModel : public IRBCModel
+{
+public:
+   /// Typedef for the spatial scheme used
+   typedef SpatialScheme::TFF SchemeType;
+
    /**
-    * @brief Implementation of the Boussinesq Rayleigh-Benard in a plane layer (toroidal/poloidal formulation)
+    * @brief Constructor
     */
-   class PhysicalModel: public IRBCModel
-   {
-      public:
-         /// Typedef for the spatial scheme used
-         typedef SpatialScheme::TFF SchemeType;
+   PhysicalModel() = default;
 
-         /**
-          * @brief Constructor
-          */
-         PhysicalModel() = default;
+   /**
+    * @brief Destructor
+    */
+   virtual ~PhysicalModel() = default;
 
-         /**
-          * @brief Destructor
-          */
-         virtual ~PhysicalModel() = default;
+   /// Python model script module name
+   virtual std::string PYMODULE() override;
 
-         /// Python model script module name
-         virtual std::string PYMODULE() override;
+   /**
+    * @brief Initialize specialized backend
+    */
+   void init() final;
 
-         /**
-          * @brief Initialize specialized backend
-          */
-         void init() final;
+protected:
+private:
+};
 
-      protected:
-
-      private:
-   };
-
-} // Explicit
-} // RBC
-} // Plane
-} // Boussinesq
-} // Model
-} // QuICC
+} // namespace Explicit
+} // namespace RBC
+} // namespace Plane
+} // namespace Boussinesq
+} // namespace Model
+} // namespace QuICC
 
 #endif // QUICC_MODEL_BOUSSINESQ_PLANE_RBC_PHYSICALMODEL_HPP
