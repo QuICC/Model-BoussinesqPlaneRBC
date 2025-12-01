@@ -13,8 +13,9 @@
 
 // Project includes
 //
-#include "Model/Boussinesq/Plane/RBC/IRBCModel.hpp"
 #include "QuICC/SpatialScheme/3D/TFF.hpp"
+#include "QuICC/Model/PyModelBackend.hpp"
+#include "Model/Boussinesq/Plane/RBC/Explicit/ModelBackend.hpp"
 
 namespace QuICC {
 
@@ -32,7 +33,7 @@ namespace Explicit {
  * @brief Implementation of the Boussinesq Rayleigh-Benard in a plane layer
  * (toroidal/poloidal formulation)
  */
-class PhysicalModel : public IRBCModel
+template <typename TBuilder> class PhysicalModel : public TBuilder
 {
 public:
    /// Typedef for the spatial scheme used
@@ -48,9 +49,6 @@ public:
     */
    virtual ~PhysicalModel() = default;
 
-   /// Python model script module name
-   virtual std::string PYMODULE() override;
-
    /**
     * @brief Initialize specialized backend
     */
@@ -59,6 +57,21 @@ public:
 protected:
 private:
 };
+
+template <typename TBuilder> void PhysicalModel<TBuilder>::init()
+{
+   TBuilder::init();
+#ifdef QUICC_MODEL_BOUSSINESQPLANERBC_EXPLICIT_BACKEND_CPP
+
+   this->mpBackend = std::make_shared<ModelBackend>();
+#else
+   std::string pyModule = "boussinesq.plane.rbc.explicit.physical_model";
+   std::string pyClass = "PhysicalModel";
+
+   this->mpBackend =
+      std::make_shared<PyModelBackend>(pyModule, pyClass);
+#endif
+}
 
 } // namespace Explicit
 } // namespace RBC
